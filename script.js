@@ -2,6 +2,7 @@ import got from 'got';
 import dotenv from 'dotenv';
 import { google } from 'googleapis';
 
+
 const sheets = google.sheets('v4')
 dotenv.config();
 
@@ -22,7 +23,7 @@ const fetchStaff = async () => {
 
 const filterStaff = async () => {
   const rawBambooHR = await fetchStaff();
-
+  //console.log(rawBambooHR);
   const filteredBambooHR = [];
 
   for (let i = 0; i < rawBambooHR.length; i++) {
@@ -94,9 +95,9 @@ const getAnalysts = async () => {
 
 // Actually runs the functions
 
-const onHoliday = [ 'Callum Earnshaw', 'Nabil Miah', 'Romario Gauntlet' ];
+// const onHoliday = [ 'Callum Earnshaw', 'Nabil Miah', 'Romario Gauntlet' ];
 
-//const onHoliday = await filterStaff();
+const onHoliday = await filterStaff();
 
 await authGoogle();
 const clientAnalysts = await getAnalysts();
@@ -110,7 +111,10 @@ for (const client in clientAnalysts) {
     //console.log(client, score);
   }
   if (score == clientAnalysts[client].length) {
-    console.log(client);
-    console.log(clientAnalysts[client]);
+    // console.log(client);
+    // console.log(clientAnalysts[client]);
   }
 }
+
+//Email sending
+
