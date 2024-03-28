@@ -1,6 +1,8 @@
 import got from 'got';
 import dotenv from 'dotenv';
 import { google } from 'googleapis';
+import sgMail from '@sendgrid/mail';
+
 
 
 const sheets = google.sheets('v4')
@@ -73,6 +75,8 @@ const authGoogle = async () => {
  * @throws {Error} - Throws an error if no tasks are found in the marketing calendar.
  */
 const getAnalysts = async () => {
+  await authGoogle();
+
   /* Get the marketing calendar */
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: "1IeVtTwyFNxn4L8yObrjDHIxNSxhEPH_dPzUblv1e_84",
@@ -90,16 +94,13 @@ const getAnalysts = async () => {
     returnValues[row[0]] = [row[3], row[6], row[7]];
     return;
   });
+  //console.log(returnValues);
+  //return [ 'Callum Earnshaw', 'Nabil Miah', 'Romario Gauntlet' ];
   return returnValues;
 }
 
 // Actually runs the functions
-
-// const onHoliday = [ 'Callum Earnshaw', 'Nabil Miah', 'Romario Gauntlet' ];
-
 const onHoliday = await filterStaff();
-
-await authGoogle();
 const clientAnalysts = await getAnalysts();
 
 for (const client in clientAnalysts) {
@@ -111,10 +112,44 @@ for (const client in clientAnalysts) {
     //console.log(client, score);
   }
   if (score == clientAnalysts[client].length) {
-    // console.log(client);
-    // console.log(clientAnalysts[client]);
+    console.log(client);
+    console.log(clientAnalysts[client]);
+    sendEmail(client, clientAnalysts[client]);
   }
 }
 
-//Email sending
+function sendEmail(client, analysts) {
+  // Add code to send email with client and analyst information
+}
 
+//Email sending
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+const msg = {
+  to: 'william@bamboonine.co.uk',
+  from: 'test@example.com', // Use the email address or domain you verified above
+  subject: 'Sending with Twilio SendGrid is Fun',
+  text: 'and easy to do anywhere, even with Node.js',
+  html: '<strong>and easy to do anywhere, even with Node.js</strong>',
+};
+//ES6
+sgMail
+  .send(msg)
+  .then(() => {}, error => {
+    console.error(error);
+
+    if (error.response) {
+      console.error(error.response.body)
+    }
+  });
+//ES8
+(async () => {
+  try {
+    await sgMail.send(msg);
+  } catch (error) {
+    console.error(error);
+
+    if (error.response) {
+      console.error(error.response.body)
+    }
+  }
+})();
