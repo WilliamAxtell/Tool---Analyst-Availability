@@ -2,14 +2,13 @@ import got from 'got';
 import dotenv from 'dotenv';
 import { google } from 'googleapis';
 import sgMail from '@sendgrid/mail';
+import schedule from 'node-schedule';
 
-
-
-const sheets = google.sheets('v4')
+const sheets = google.sheets('v4');
 dotenv.config();
 
 
-//Fetches all the staff who are on holiday and adds their full names to an array. If they have a preferred name, it also adds that to the array.
+//Fetches all the staff who are on holiday or sick and adds their full names to an array. If they have a preferred name, it also adds that to the array.
 const fetchStaff = async () => {
   const response = await got.post('https://europe-west2-bamboo-nine-internal-tools.cloudfunctions.net/staff', {
     headers: {
@@ -25,7 +24,6 @@ const fetchStaff = async () => {
 
 const filterStaff = async () => {
   const rawBambooHR = await fetchStaff();
-  //console.log(rawBambooHR);
   const filteredBambooHR = [];
 
   for (let i = 0; i < rawBambooHR.length; i++) {
@@ -40,15 +38,12 @@ const filterStaff = async () => {
     }
   }
 
+  //return [ 'Callum Earnshaw', 'Nabil Miah', 'Romario Gauntlet' ];
   return filteredBambooHR;
 }
 
-/**
- * Gain authorization for accessing Google Drive.
- * @returns {Promise<void>} A promise that resolves when authorization is successful.
- */
+//Fetches all the paid media clients and their respective analysts
 const authGoogle = async () => {
-  /* Create a new auth client */
   const auth = new google.auth.GoogleAuth({
     scopes: ['https://www.googleapis.com/auth/drive'],
     credentials: {
@@ -65,91 +60,94 @@ const authGoogle = async () => {
     }
   })
 
-  /* Set the credentials */
   google.options({ auth })
 }
 
-/**
- * Retrieves the marketing calendar from a specified spreadsheet.
- * @returns {Promise<Array<Object>>} - A promise that resolves to an array of objects representing the filtered tasks from the marketing calendar.
- * @throws {Error} - Throws an error if no tasks are found in the marketing calendar.
- */
 const getAnalysts = async () => {
   await authGoogle();
 
-  /* Get the marketing calendar */
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: "1IeVtTwyFNxn4L8yObrjDHIxNSxhEPH_dPzUblv1e_84",
-    range: "'Master AOL'!A1:H",
+    range: "'Master AOL'!A1:Z",
     valueRenderOption: 'FORMATTED_VALUE'
   })
 
-  /* Map headers to values */
-  const headers = res.data.values[1]
-  /* Map values to objects */
+  const headers = res.data.values[1];
+  const primaryAnalyst = headers.indexOf("Paid Media Analyst");
+  const secondaryAnalyst = headers.indexOf("Paid Media Secondary Analyst");
+  const tertiaryAnalyst = headers.indexOf("Paid Media Tertiary Analyst");
+
   const returnValues = {};
   const values = res.data.values.slice(2)
-  .filter((row) => new Boolean(row[0]) == true && new Boolean(row[3]) == true && new Boolean(row[6]) == true && new Boolean(row[7]) == true)
+  .filter((row) => new Boolean(row[0]) == true && new Boolean(row[primaryAnalyst]) == true && new Boolean(row[secondaryAnalyst]) == true && new Boolean(row[tertiaryAnalyst]) == true)
   .map((row) => {
-    returnValues[row[0]] = [row[3], row[6], row[7]];
+    returnValues[row[0]] = [row[primaryAnalyst], row[secondaryAnalyst], row[tertiaryAnalyst]];
     return;
   });
-  //console.log(returnValues);
-  //return [ 'Callum Earnshaw', 'Nabil Miah', 'Romario Gauntlet' ];
+
   return returnValues;
 }
 
-// Actually runs the functions
-const onHoliday = await filterStaff();
-const clientAnalysts = await getAnalysts();
+// Builds the list of client who have no anaylst on duty
+const buildSendList = async () => {
+  let sendList = ``;
 
-for (const client in clientAnalysts) {
-  let score = 0;
-  for (let i = 0; i < clientAnalysts[client].length; i++) {
-    if (onHoliday.includes(clientAnalysts[client][i])) {
-      score++;
+  const onHoliday = await filterStaff();
+  const clientAnalysts = await getAnalysts();
+
+  for (const client in clientAnalysts) {
+    let score = 0;
+    for (let i = 0; i < clientAnalysts[client].length; i++) {
+      if (onHoliday.includes(clientAnalysts[client][i])) {
+        score++;
+      }
     }
-    //console.log(client, score);
+    if (score == clientAnalysts[client].length) {
+      sendList += `<li>${client}</li>`;
+    }
   }
-  if (score == clientAnalysts[client].length) {
-    console.log(client);
-    console.log(clientAnalysts[client]);
-    sendEmail(client, clientAnalysts[client]);
+  
+  if (sendList != ``) {
+    sendEmail(sendList);
+  } else {
+    console.log("No alert needed today");
   }
 }
 
-function sendEmail(client, analysts) {
-  // Add code to send email with client and analyst information
+//Sends an email to HoPM if there are any clients without an analyst on duty
+const sendEmail = (list) => {
+  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+  const msg = {
+    to: 'paidmedia@bamboonine.co.uk',
+    from: 'data@bamboonine.co.uk',
+    subject: 'Accounts without an analyst on duty',
+    //text: 'and easy to do anywhere, even with Node.js',
+    html: `<p>Good Morning, Zak!</p>
+          <p>There are clients without an analyst on duty today:</p>
+          <ul>
+            ${list}
+          </ul>
+          <p>Kind Regards,</p>
+          <p>The Data Team</p>`,
+  };
+
+  (async () => {
+    try {
+      await sgMail.send(msg);
+      console.log("email sent successfully");
+    } catch (error) {
+      console.error(error);
+
+      if (error.response) {
+        console.error(error.response.body)
+      }
+    }
+  })();
 }
 
-//Email sending
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-const msg = {
-  to: 'william@bamboonine.co.uk',
-  from: 'test@example.com', // Use the email address or domain you verified above
-  subject: 'Sending with Twilio SendGrid is Fun',
-  text: 'and easy to do anywhere, even with Node.js',
-  html: '<strong>and easy to do anywhere, even with Node.js</strong>',
-};
-//ES6
-sgMail
-  .send(msg)
-  .then(() => {}, error => {
-    console.error(error);
+console.log("scheduler running");
 
-    if (error.response) {
-      console.error(error.response.body)
-    }
-  });
-//ES8
-(async () => {
-  try {
-    await sgMail.send(msg);
-  } catch (error) {
-    console.error(error);
-
-    if (error.response) {
-      console.error(error.response.body)
-    }
-  }
-})();
+const j = schedule.scheduleJob({hour: 8, minute: 45}, () => {
+  console.log("job scheduled");
+  buildSendList();
+});
