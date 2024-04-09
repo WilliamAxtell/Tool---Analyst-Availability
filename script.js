@@ -1,8 +1,10 @@
+import console from './logger.js';
 import got from 'got';
 import dotenv from 'dotenv';
 import { google } from 'googleapis';
 import sgMail from '@sendgrid/mail';
 import schedule from 'node-schedule';
+
 
 const sheets = google.sheets('v4');
 dotenv.config();
