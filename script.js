@@ -152,9 +152,7 @@ const sendEmail = (list, department, midi) => {
     //text: 'and easy to do anywhere, even with Node.js',
     html: `<p>Good ${midi}, Paid Media team!</p>
           <p>There are ${depVar} clients without an analyst on duty this ${midi}:</p>
-          <ul>
-            ${list}
-          </ul>
+          ${list}
           <p>Kind Regards,</p>
           <p>The Data Team</p>`,
   };
