@@ -26,21 +26,26 @@ const fetchStaff = async () => {
 
 const filterStaff = async () => {
   const rawBambooHR = await fetchStaff();
-  const filteredBambooHR = [];
+  const filteredBambooHR = {};
 
   for (let i = 0; i < rawBambooHR.length; i++) {
     const employee = rawBambooHR[i];
     if (employee.deparment == "Paid Media" && employee.holiday == true) {
       const employeeName = employee.firstName + " " + employee.lastName;
-      filteredBambooHR.push(employeeName);
+      filteredBambooHR[employeeName] = [];
       if (employee.preferredName != null && employee.preferredName != employee.firstName) {
       const employeeNickname = employee.preferredName + " " + employee.lastName;
-      filteredBambooHR.push(employeeNickname);
+      filteredBambooHR[employeeNickname] = [];
       }
     }
   }
 
-  //return [ 'Callum Earnshaw', 'Nabil Miah', 'Romario Gauntlet' ];
+  return {
+    'Tom Haynes': [],
+    "Joe O'Donnell": [],
+    'Sophie Grant' : [],
+  };
+  //console.log(filteredBambooHR);
   return filteredBambooHR;
 }
 
@@ -70,23 +75,22 @@ const getAnalysts = async () => {
 
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: "1IeVtTwyFNxn4L8yObrjDHIxNSxhEPH_dPzUblv1e_84",
-    range: "'Master AOL'!A1:Z",
+    range: "'Master AOL v2.0 (DRAFT)'!A1:F",
     valueRenderOption: 'FORMATTED_VALUE'
   })
 
   const headers = res.data.values[1];
-  const primaryAnalyst = headers.indexOf("Paid Media Analyst");
-  const secondaryAnalyst = headers.indexOf("Paid Media Secondary Analyst");
-  const tertiaryAnalyst = headers.indexOf("Paid Media Tertiary Analyst");
+  const analyst = headers.indexOf("Analyst");
+  const secondaryAnalyst = headers.indexOf("Secondary analyst");
 
   const returnValues = {};
   const values = res.data.values.slice(2)
-  .filter((row) => new Boolean(row[0]) == true && new Boolean(row[primaryAnalyst]) == true && new Boolean(row[secondaryAnalyst]) == true && new Boolean(row[tertiaryAnalyst]) == true)
+  .filter((row) => new Boolean(row[0]) == true && new Boolean(row[analyst]) == true)
   .map((row) => {
-    returnValues[row[0]] = [row[primaryAnalyst], row[secondaryAnalyst], row[tertiaryAnalyst]];
+    returnValues[row[0]] = [row[analyst], row[secondaryAnalyst]];
     return;
   });
-
+  //console.log(returnValues);
   return returnValues;
 }
 
@@ -98,17 +102,26 @@ const buildSendList = async () => {
   const clientAnalysts = await getAnalysts();
 
   for (const client in clientAnalysts) {
-    let score = 0;
-    for (let i = 0; i < clientAnalysts[client].length; i++) {
-      if (onHoliday.includes(clientAnalysts[client][i])) {
-        score++;
-      }
-    }
-    if (score == clientAnalysts[client].length) {
-      sendList += `<li>${client}</li>`;
-    }
+    const currAnalyst = clientAnalysts[client][0];
+    if (currAnalyst in onHoliday) {
+      onHoliday[currAnalyst].push([client, clientAnalysts[client][1]]);
+    };
   }
   
+  for (const analyst in onHoliday) {
+    sendList += `<p>${analyst} is on holiday or sick today. The following clients are without an analyst:</p><ul>`;
+    for (const client of onHoliday[analyst]) {
+      if (client[1] === undefined || client[1] in onHoliday) {
+      sendList += `<li>${client[0]}</li>`;
+      } else {
+      sendList += `<li>${client[0]} - ${client[1]} is on duty as the secondary analyst</li>`;
+      }
+    }
+    sendList += `</ul><br>`;
+  }
+
+  //console.log(sendList);
+
   if (sendList != ``) {
     sendEmail(sendList);
   } else {
@@ -120,7 +133,7 @@ const buildSendList = async () => {
 const sendEmail = (list) => {
   sgMail.setApiKey(process.env.SENDGRID_API_KEY);
   const msg = {
-    to: 'paidmedia@bamboonine.co.uk',
+    to: 'william@bamboonine.co.uk',
     from: 'data@bamboonine.co.uk',
     subject: 'Accounts without an analyst on duty',
     //text: 'and easy to do anywhere, even with Node.js',
@@ -147,9 +160,11 @@ const sendEmail = (list) => {
   })();
 }
 
-console.log("scheduler running");
+// console.log("scheduler running");
 
-const j = schedule.scheduleJob({hour: 8, minute: 45}, () => {
-  console.log("job scheduled");
-  buildSendList();
-});
+// const j = schedule.scheduleJob({hour: 8, minute: 45}, () => {
+//   console.log("job scheduled");
+//   buildSendList();
+// });
+
+buildSendList();
