@@ -24,6 +24,7 @@ const fetchStaff = async () => {
   return data
 }
 
+//Filters staff by department and holiday status. If the employee has a preferred name, it adds that to the array as well.
 const filterStaff = async () => {
   const rawBambooHR = await fetchStaff();
   const filteredBambooHR = {};
@@ -40,11 +41,11 @@ const filterStaff = async () => {
     }
   }
 
-  return {
-    'Tom Haynes': [],
-    "Joe O'Donnell": [],
-    'Sophie Grant' : [],
-  };
+  // return {
+  //   'Tom Haynes': [],
+  //   "Joe O'Donnell": [],
+  //   'Sophie Grant' : [],
+  // };
   //console.log(filteredBambooHR);
   return filteredBambooHR;
 }
@@ -70,18 +71,26 @@ const authGoogle = async () => {
   google.options({ auth })
 }
 
-const getAnalysts = async () => {
+const getAnalysts = async (department) => {
   await authGoogle();
-
+  
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: "1IeVtTwyFNxn4L8yObrjDHIxNSxhEPH_dPzUblv1e_84",
-    range: "'Master AOL v2.0 (DRAFT)'!A1:F",
+    range: "'Master AOL v2.0 (DRAFT)'!A1:Z",
     valueRenderOption: 'FORMATTED_VALUE'
   })
-
+  
   const headers = res.data.values[1];
-  const analyst = headers.indexOf("Analyst");
-  const secondaryAnalyst = headers.indexOf("Secondary analyst");
+  let analyst;
+  let secondaryAnalyst;
+  
+  if (department == "pm") {
+    analyst = headers.indexOf("Analyst");
+    secondaryAnalyst = headers.indexOf("Secondary analyst");
+  } else if (department == "ps") {
+    analyst = headers.indexOf("Paid Social lead");
+    secondaryAnalyst = headers.indexOf("Paid Social secondary");
+  }
 
   const returnValues = {};
   const values = res.data.values.slice(2)
@@ -90,16 +99,16 @@ const getAnalysts = async () => {
     returnValues[row[0]] = [row[analyst], row[secondaryAnalyst]];
     return;
   });
-  //console.log(returnValues);
+  // console.log(returnValues);
   return returnValues;
 }
 
 // Builds the list of client who have no anaylst on duty
-const buildSendList = async () => {
+const buildSendList = async (department, midi) => {
   let sendList = ``;
 
   const onHoliday = await filterStaff();
-  const clientAnalysts = await getAnalysts();
+  const clientAnalysts = await getAnalysts(department);
 
   for (const client in clientAnalysts) {
     const currAnalyst = clientAnalysts[client][0];
@@ -109,9 +118,12 @@ const buildSendList = async () => {
   }
   
   for (const analyst in onHoliday) {
+    if (onHoliday[analyst].length == 0) {
+      continue;
+    };
     sendList += `<p>${analyst} is on holiday or sick today. The following clients are without an analyst:</p><ul>`;
     for (const client of onHoliday[analyst]) {
-      if (client[1] === undefined || client[1] in onHoliday) {
+      if (new Boolean(client[1]) == false || client[1] in onHoliday) {
       sendList += `<li>${client[0]}</li>`;
       } else {
       sendList += `<li>${client[0]} - ${client[1]} is on duty as the secondary analyst</li>`;
@@ -123,22 +135,23 @@ const buildSendList = async () => {
   //console.log(sendList);
 
   if (sendList != ``) {
-    sendEmail(sendList);
+    sendEmail(sendList, department, midi);
   } else {
     console.log("No alert needed today");
   }
 }
 
 //Sends an email to HoPM if there are any clients without an analyst on duty
-const sendEmail = (list) => {
+const sendEmail = (list, department, midi) => {
   sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+  const depVar = department == "pm" ? "Paid Media" : "Paid Social";
   const msg = {
-    to: 'william@bamboonine.co.uk',
+    to: 'paidmedia@bamboonine.co.uk',
     from: 'data@bamboonine.co.uk',
-    subject: 'Accounts without an analyst on duty',
+    subject: `${depVar} accounts without an analyst on duty this ${midi}`,
     //text: 'and easy to do anywhere, even with Node.js',
-    html: `<p>Good Morning, Zak!</p>
-          <p>There are clients without an analyst on duty today:</p>
+    html: `<p>Good ${midi}, Paid Media team!</p>
+          <p>There are ${depVar} clients without an analyst on duty this ${midi}:</p>
           <ul>
             ${list}
           </ul>
@@ -160,11 +173,19 @@ const sendEmail = (list) => {
   })();
 }
 
-// console.log("scheduler running");
+console.log("scheduler running");
 
-// const j = schedule.scheduleJob({hour: 8, minute: 45}, () => {
-//   console.log("job scheduled");
-//   buildSendList();
-// });
+const morningMail = schedule.scheduleJob({hour: 8, minute: 30}, () => {
+  console.log("morning job scheduled");
+  buildSendList("pm", "morning");
+  buildSendList("ps", "morning");
+});
 
-buildSendList();
+const afternoonMail = schedule.scheduleJob({hour: 14, minute: 00}, () => {
+  console.log("afternoon job scheduled");
+  buildSendList("pm", "afternoon");
+  buildSendList("ps", "afternoon");
+});
+
+// buildSendList("pm", "morning");
+// buildSendList("ps", "afternoon");
