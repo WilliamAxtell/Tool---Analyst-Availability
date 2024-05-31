@@ -181,7 +181,7 @@ const morningMail = schedule.scheduleJob({hour: 8, minute: 30}, () => {
   buildSendList("ps", "morning");
 });
 
-const afternoonMail = schedule.scheduleJob({hour: 14, minute: 00}, () => {
+const afternoonMail = schedule.scheduleJob({hour: 14, minute: 0}, () => {
   console.log("afternoon job scheduled");
   buildSendList("pm", "afternoon");
   buildSendList("ps", "afternoon");
