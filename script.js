@@ -32,7 +32,7 @@ const buildSendList = async (onHoliday, media) => {
 
 console.log("scheduler running");
 
-const j = schedule.scheduleJob({hour: 11, minute: 41}, async () => {
+const j = schedule.scheduleJob({hour: 8, minute: 30}, async () => {
    const onHoliday = await filterStaff();
    buildSendList(onHoliday, "pm");
    buildSendList(onHoliday, "ps");
