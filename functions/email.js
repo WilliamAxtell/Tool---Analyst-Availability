@@ -16,7 +16,7 @@ const sendEmail = (list, media) => {
       from: 'data@bamboonine.co.uk',
       subject: 'Accounts without an analyst on duty',
       //text: 'and easy to do anywhere, even with Node.js',
-      html: `<p>Good Morning, Zak!</p>
+      html: `<p>Good Morning, Team!</p>
             <p>There are ${mediaName} clients without an analyst on duty today:</p>
             <ul>
               ${list}
