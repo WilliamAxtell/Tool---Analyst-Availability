@@ -1,0 +1,11 @@
+ReferenceError: filterStaff is not defined
+    at file:///C:/Users/William%20Bamboo%20Nine/OneDrive%20-%20Bamboo%20Nine%20Media%20Ltd/Documents/Tool%20-%20Analyst%20Availability/controllers/analysts.js:5:23
+    at file:///C:/Users/William%20Bamboo%20Nine/OneDrive%20-%20Bamboo%20Nine%20Media%20Ltd/Documents/Tool%20-%20Analyst%20Availability/middleware/async.js:4:19
+    at Layer.handle [as handle_request] (C:\Users\William Bamboo Nine\OneDrive - Bamboo Nine Media Ltd\Documents\Tool - Analyst Availability\node_modules\express\lib\router\layer.js:95:5)
+    at next (C:\Users\William Bamboo Nine\OneDrive - Bamboo Nine Media Ltd\Documents\Tool - Analyst Availability\node_modules\express\lib\router\route.js:149:13)
+    at Route.dispatch (C:\Users\William Bamboo Nine\OneDrive - Bamboo Nine Media Ltd\Documents\Tool - Analyst Availability\node_modules\express\lib\router\route.js:119:3)
+    at Layer.handle [as handle_request] (C:\Users\William Bamboo Nine\OneDrive - Bamboo Nine Media Ltd\Documents\Tool - Analyst Availability\node_modules\express\lib\router\layer.js:95:5)
+    at C:\Users\William Bamboo Nine\OneDrive - Bamboo Nine Media Ltd\Documents\Tool - Analyst Availability\node_modules\express\lib\router\index.js:284:15
+    at Function.process_params (C:\Users\William Bamboo Nine\OneDrive - Bamboo Nine Media Ltd\Documents\Tool - Analyst Availability\node_modules\express\lib\router\index.js:346:12)
+    at next (C:\Users\William Bamboo Nine\OneDrive - Bamboo Nine Media Ltd\Documents\Tool - Analyst Availability\node_modules\express\lib\router\index.js:280:10)
+    at Function.handle (C:\Users\William Bamboo Nine\OneDrive - Bamboo Nine Media Ltd\Documents\Tool - Analyst Availability\node_modules\express\lib\router\index.js:175:3) ~ Wed Jun 26 2024 14:39:26 GMT+0100 (British Summer Time)

@@ -1,49 +1,35 @@
 import console from './logger.js';
 import { filterStaff } from './functions/holiday-fetch.js';
-import { getAnalysts } from './functions/maol-fetch.js';
-import { sendEmail } from './functions/email.js';
+import {router} from './routes/analysts.js';
+import { buildSendList } from './functions/build-sendlist.js';
 import schedule from 'node-schedule';
+import express from 'express';
 
-// Builds the list of client who have no anaylst on duty
-const buildSendList = async (onHoliday, media) => {
-  let sendList = ``;
+const app = express();
+const port = process.env.PORT || 3000;
 
-  const clientAnalysts = await getAnalysts(media);
-  //console.log(clientAnalysts);
+// middleware
+app.use(express.json());
 
-  for (const client in clientAnalysts) {
-    let score = 0;
-    for (let i = 0; i < clientAnalysts[client].length; i++) {
-      if (onHoliday.includes(clientAnalysts[client][i]) || clientAnalysts[client][i] == "") {
-        score++;
-      }
-    }
-    if (score == clientAnalysts[client].length) {
-      sendList += `<li>${client}</li>`;
-    }
-  }
-  
-  if (sendList != ``) {
-    sendEmail(sendList, media);
-  } else {
-    console.log("No alert needed today");
+// routes
+app.use('/api/v1/get-analysts', router);
+
+
+const start = async () => {
+  try {
+    app.listen(port, () => {
+      console.log(`Server is running on port ${port}`);
+    });
+    schedule.scheduleJob({hour: 8, minute: 30}, async () => {
+      const onHoliday = await filterStaff();
+      buildSendList(onHoliday, "pm");
+      buildSendList(onHoliday, "ps");
+      console.log("job scheduled");
+    });
+    console.log("scheduler running");
+  } catch (error) {
+    console.log(error);
   }
 }
 
-console.log("scheduler running");
-
-const j = schedule.scheduleJob({hour: 8, minute: 30}, async () => {
-   const onHoliday = await filterStaff();
-   buildSendList(onHoliday, "pm");
-   buildSendList(onHoliday, "ps");
-   console.log("job scheduled");
- });
-
-// Test function to check if the email is being sent correctly
-// const testSend = async () => {
-//     //const onHoliday = await filterStaff();
-//     const onHoliday = ["Zak Pashen", "Nabil Miah"];
-//     buildSendList(onHoliday, "pm");
-//     buildSendList(onHoliday, "ps");
-// }
-// testSend();
+start();
