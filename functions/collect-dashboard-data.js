@@ -2,7 +2,7 @@ import { getAnalysts } from './maol-fetch.js';
 
 // Builds the list of client who have no anaylst on duty
 const collectDashboardData = async (onHoliday, media) => {
-    let dashBoardData = {};
+    let dashBoardData = [];
   
     const clientAnalysts = await getAnalysts(media);
     //console.log(clientAnalysts);
@@ -15,9 +15,9 @@ const collectDashboardData = async (onHoliday, media) => {
         }
       }
       if (score == clientAnalysts[client].length) {
-        dashBoardData[client] = {analysts: clientAnalysts[client], status: "no analyst"};
+        dashBoardData.push({client: client, analysts: clientAnalysts[client], status: "No Analyst On Duty"});
       } else if (onHoliday.includes(clientAnalysts[client][0])) {
-        dashBoardData[client] = {analysts: clientAnalysts[client], status: "primary ooo"};
+        dashBoardData.push({client: client, analysts: clientAnalysts[client], status: "Primary Analyst OOO"});
       }
     }
     
