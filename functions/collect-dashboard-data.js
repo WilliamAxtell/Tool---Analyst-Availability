@@ -11,7 +11,9 @@ const collectDashboardData = async (onHoliday, media) => {
       let score = 0;
       let analystArr = [];
       for (let i = 0; i < clientAnalysts[client].length; i++) {
-        if (onHoliday.includes(clientAnalysts[client][i]) || clientAnalysts[client][i] == "") {
+        if (clientAnalysts[client][i] == "") {
+          score++;
+        } else if (onHoliday.includes(clientAnalysts[client][i])) {
           score++;
           analystArr.push([clientAnalysts[client][i], true]);
         } else {
