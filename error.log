@@ -9,3 +9,13 @@ ReferenceError: filterStaff is not defined
     at Function.process_params (C:\Users\William Bamboo Nine\OneDrive - Bamboo Nine Media Ltd\Documents\Tool - Analyst Availability\node_modules\express\lib\router\index.js:346:12)
     at next (C:\Users\William Bamboo Nine\OneDrive - Bamboo Nine Media Ltd\Documents\Tool - Analyst Availability\node_modules\express\lib\router\index.js:280:10)
     at Function.handle (C:\Users\William Bamboo Nine\OneDrive - Bamboo Nine Media Ltd\Documents\Tool - Analyst Availability\node_modules\express\lib\router\index.js:175:3) ~ Wed Jun 26 2024 14:39:26 GMT+0100 (British Summer Time)
+RequestError: getaddrinfo ENOTFOUND europe-west2-bamboo-nine-internal-tools.cloudfunctions.net
+    at ClientRequest.<anonymous> (file:///C:/Users/William%20Bamboo%20Nine/OneDrive%20-%20Bamboo%20Nine%20Media%20Ltd/Documents/Tool%20-%20Analyst%20Availability/node_modules/got/dist/source/core/index.js:670:107)
+    at Object.onceWrapper (node:events:633:26)
+    at ClientRequest.emit (node:events:530:35)
+    at TLSSocket.socketErrorListener (node:_http_client:495:9)
+    at TLSSocket.emit (node:events:518:28)
+    at emitErrorNT (node:internal/streams/destroy:169:8)
+    at emitErrorCloseNT (node:internal/streams/destroy:128:3)
+    at process.processTicksAndRejections (node:internal/process/task_queues:82:21)
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:118:26) ~ Fri Jun 28 2024 12:54:20 GMT+0100 (British Summer Time)

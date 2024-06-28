@@ -4,12 +4,20 @@ import {router} from './routes/analysts.js';
 import { buildSendList } from './functions/build-sendlist.js';
 import schedule from 'node-schedule';
 import express from 'express';
+import cors from 'cors';
+
+const corsOptions = {
+  origin: '*',
+  methods: ['POST', 'GET', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}
 
 const app = express();
 const port = process.env.PORT || 3000;
 
 // middleware
 app.use(express.json());
+app.use(cors(corsOptions));
 
 // routes
 app.use('/api/v1/get-analysts', router);
